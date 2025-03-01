@@ -7,14 +7,14 @@ import csv
 import io
 
 st.title("LOL Dataset Key Visualizations")
-st.write("This app displays key visualizations based on the LOL dataset using the same code used in the original notebook.")
+st.write("This app displays key visualizations based on the original notebook code. It also shows the DataFrame columns so you can verify the column names.")
 
 # ----------------------------
 # Data Loading & Preprocessing
 # ----------------------------
 def load_data():
     try:
-        # on_bad_lines='skip' handles rows with extra or missing fields.
+        # on_bad_lines='skip' will skip rows with formatting issues.
         df = pd.read_csv("Data PM - case (1).csv",
                          on_bad_lines='skip',
                          engine='python',
@@ -40,22 +40,26 @@ df = load_data()
 
 if df is not None:
     # ----------------------------
-    # Data Preview and Summary (from the original file)
+    # Data Preview and Summary
     # ----------------------------
     st.subheader("Data Preview")
     st.dataframe(df.head())
     st.write("**Shape of the DataFrame:**", df.shape)
     
-    st.subheader("DataFrame Info")
+    # Show all column names for clarity
+    st.write("**Columns in DataFrame:**", df.columns.tolist())
+    
+    # Display DataFrame info using StringIO buffer
     buffer = io.StringIO()
     df.info(buf=buffer)
-    info_str = buffer.getvalue()
-    st.text(info_str)
+    st.text(buffer.getvalue())
     
     st.subheader("Descriptive Statistics (Numerical Columns)")
     st.write(df.describe())
     
-    # Unique values and frequency for categorical column "CURRENCY_CODE" (if available)
+    # ----------------------------
+    # Unique values for CURRENCY_CODE (if available)
+    # ----------------------------
     if 'CURRENCY_CODE' in df.columns:
         st.subheader("Unique Values and Frequency in 'CURRENCY_CODE'")
         st.write("Unique values:", df['CURRENCY_CODE'].unique())
@@ -63,9 +67,9 @@ if df is not None:
         st.write(df['CURRENCY_CODE'].value_counts())
     else:
         st.warning("Column 'CURRENCY_CODE' not found.")
-    
+
     # ----------------------------
-    # Parse JSON column to extract total_balance (as in the original file)
+    # Parse POST_TRANSACTION_ACCOUNT_BALANCES to extract total_balance
     # ----------------------------
     if 'POST_TRANSACTION_ACCOUNT_BALANCES' in df.columns:
         st.subheader("Parsing 'POST_TRANSACTION_ACCOUNT_BALANCES' to Extract total_balance")
@@ -73,7 +77,7 @@ if df is not None:
         st.dataframe(df[['POST_TRANSACTION_ACCOUNT_BALANCES', 'total_balance']].head())
     else:
         st.warning("Column 'POST_TRANSACTION_ACCOUNT_BALANCES' not found.")
-    
+
     # ----------------------------
     # Visualization 1: Distribution of Transaction Amounts
     # ----------------------------
@@ -85,8 +89,8 @@ if df is not None:
         ax1.set_xlabel("Transaction Amount")
         st.pyplot(fig1)
     else:
-        st.warning("Column 'TRANSACTION_AMOUNT' not found. Cannot display Distribution of Transaction Amounts.")
-    
+        st.warning("Column 'TRANSACTION_AMOUNT' not found. Please update the code with the correct column name for transaction amounts.")
+
     # ----------------------------
     # Visualization 2: Box Plot of Transaction Amounts by Currency
     # ----------------------------
@@ -99,8 +103,8 @@ if df is not None:
         ax2.set_ylabel("Transaction Amount")
         st.pyplot(fig2)
     else:
-        st.warning("Columns 'TRANSACTION_AMOUNT' and/or 'CURRENCY_CODE' not found. Cannot display Box Plot of Transaction Amounts by Currency.")
-    
+        st.warning("Columns 'TRANSACTION_AMOUNT' and/or 'CURRENCY_CODE' not found. Please update the code with the correct column names.")
+
     # ----------------------------
     # Visualization 3: Top 10 Merchant Category Codes (MCC)
     # ----------------------------
@@ -114,8 +118,8 @@ if df is not None:
         ax3.set_ylabel("MCC")
         st.pyplot(fig3)
     else:
-        st.warning("Column 'MCC' not found. Cannot display Top 10 MCC visualization.")
-    
+        st.warning("Column 'MCC' not found. Please update the code with the correct column name for MCC.")
+
     # ----------------------------
     # Visualization 4: Scatter Plot of Transaction Amount vs. Total Balance
     # ----------------------------
@@ -128,23 +132,22 @@ if df is not None:
         ax4.set_ylabel("Total Balance")
         st.pyplot(fig4)
     else:
-        st.warning("Columns 'TRANSACTION_AMOUNT' and/or 'total_balance' not found. Cannot display Scatter Plot.")
-    
+        st.warning("Columns 'TRANSACTION_AMOUNT' and/or 'total_balance' not found. Please update the code with the correct column names.")
+
     # ----------------------------
-    # Visualization 5: Time Series of Transaction Amounts (if Timestamp data available)
+    # Visualization 5: Time Series of Transaction Amounts
     # ----------------------------
     st.subheader("5. Time Series of Transaction Amounts")
     if 'TRANSACTION_AMOUNT' in df.columns and 'TIMESTAMP' in df.columns:
         try:
             df['TIMESTAMP'] = pd.to_datetime(df['TIMESTAMP'])
             df.sort_values('TIMESTAMP', inplace=True)
-            # Resample transaction amounts over a daily frequency (or adjust as needed)
             ts_df = df[['TIMESTAMP', 'TRANSACTION_AMOUNT']].dropna()
             ts_df = ts_df.set_index('TIMESTAMP').resample('D').sum()
             st.line_chart(ts_df)
         except Exception as e:
             st.error(f"Error processing TIMESTAMP column: {e}")
     else:
-        st.warning("Columns 'TRANSACTION_AMOUNT' and/or 'TIMESTAMP' not found. Cannot display Time Series of Transaction Amounts.")
+        st.warning("Columns 'TRANSACTION_AMOUNT' and/or 'TIMESTAMP' not found. Please update the code with the correct column names for the time series.")
 else:
     st.error("No data loaded. Please ensure the CSV file exists and is formatted correctly.")
